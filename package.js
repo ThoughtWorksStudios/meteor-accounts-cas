@@ -1,6 +1,6 @@
 Package.describe({
   summary: "CAS support for accounts",
-  version: "0.0.3",
+  version: "0.0.5",
   name: "twstudios:accounts-cas",
   git: "https://github.com/ThoughtWorksStudios/meteor-accounts-cas"
 });
