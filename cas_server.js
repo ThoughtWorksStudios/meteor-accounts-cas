@@ -4,10 +4,8 @@ var CAS = Npm.require('cas');
 
 var _casCredentialTokens = {};
 
-console.log(Meteor.settings.cas);
-console.log(Meteor.settings.public.cas);
 if (Meteor.settings.cas && !!Meteor.settings.cas.relaxSSL) {
-  console.log("DISABLING SSL VERIFICATION");
+  console.log("** DISABLING SSL CERTIFICATE VERIFICATION **");
 
   // SSL certificate verification can be disabled for dev environments
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
