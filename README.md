@@ -5,18 +5,16 @@ Multitenant CAS login support. Also supports tenant namespacing if supported by 
 
 ## Usage
 
-put CAS settings in Meteor.settings (for exemple using METEOR_SETTINGS env or --settings) like so:
+put CAS settings in Meteor.settings (for exemple using METEOR_SETTINGS env or --settings) like so (but without the comments):
 
 ```
 "cas": {
-    "baseUrl": "https://sso.cas-server.com/cas",
-    "namespace": "staging",
-    "relaxSSL": true
+    "relaxSSL": true // relaxes SSL certificate validation of CAS server; useful for development
 },
 "public": {
     "cas": {
         "baseUrl": "https://sso.cas-server.com/cas",
-        "namespace": "staging",
+        "namespace": "staging", // optional, use if CAS server is shared between environments
         "serviceParam": "service"
     }
 }

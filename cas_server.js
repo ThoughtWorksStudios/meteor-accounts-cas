@@ -4,8 +4,12 @@ var CAS = Npm.require('cas');
 
 var _casCredentialTokens = {};
 
+function log(message) {
+  console.log(["[accounts-cas]", message].join(" "));
+}
+
 if (Meteor.settings.cas && !!Meteor.settings.cas.relaxSSL) {
-  console.log("** DISABLING SSL CERTIFICATE VERIFICATION **");
+  log("** DISABLING SSL CERTIFICATE VERIFICATION **");
 
   // SSL certificate verification can be disabled for dev environments
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -15,27 +19,27 @@ var casTicket = function (ticket, token, site) {
 
   var fut = new Future();
   // get configuration
-  if (!Meteor.settings.cas && !Meteor.settings.cas.validate) {
-    console.log("accounts-cas: unable to get configuration");
+  if (!Meteor.settings.public || !Meteor.settings.public.cas) {
+    log("unable to get configuration");
     return;
   }
 
-  var casSiteID = Meteor.settings.cas.namespace ? Meteor.settings.cas.namespace + "$" + site : site;
+  var casSiteID = Meteor.settings.public.cas.namespace ? Meteor.settings.public.cas.namespace + "$" + site : site;
   var cas = new CAS({
-    base_url: [Meteor.settings.cas.baseUrl, casSiteID].join("/"),
+    base_url: [Meteor.settings.public.cas.baseUrl, casSiteID].join("/"),
     service: [Meteor.absoluteUrl().replace(/\/+$/, ""), "cas", site, token].join("/")
   });
 
   cas.validate(ticket, function(err, status, username) {
     if (err) {
-      console.log("accounts-cas: error when trying to validate " + err);
+      log("error when trying to validate " + err);
     } else {
       if (status) {
-        var siteUser = [username, casSiteID].join("@");
-        console.log("accounts-cas: user validated " + siteUser);
+        var siteUser = [username, site].join("@");
+        log("user validated " + siteUser);
         _casCredentialTokens[token] = { id: siteUser };
       } else {
-        console.log("accounts-cas: unable to validate " + ticket);
+        log("unable to validate " + ticket);
       }
     }
     fut.return("done");
