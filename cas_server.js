@@ -17,6 +17,10 @@ if (Meteor.settings.cas && !!Meteor.settings.cas.relaxSSL) {
 
 var casTicket = function (ticket, token, site) {
 
+  check(ticket, String);
+  check(token, String);
+  check(site, String);
+
   var fut = new Future();
   // get configuration
   if (!Meteor.settings.public || !Meteor.settings.public.cas) {
@@ -68,8 +72,33 @@ var casTicket = function (ticket, token, site) {
 
   var result = _retrieveCredential(options.cas.credentialToken);
   var data = { profile: { name: result.id } };
-  var user = Accounts.updateOrCreateUserFromExternalService("cas", result, data);
-  return user;
+  var output = Accounts.updateOrCreateUserFromExternalService("cas", result, data);
+
+  if (Partitioner && "function" === typeof Partitioner.directOperation) {
+    Partitioner.directOperation(function() {
+      var userId = output.userId, site = options.cas.site;
+      var user = Meteor.users.findOne(userId);
+      var ownedByTenant = Partitioner.getUserGroup(userId);
+
+      if (!user.admin) {
+        if (!ownedByTenant) {
+          Partitioner.setUserGroup(userId, site);
+          ownedByTenant = site;
+        }
+
+        if (!user.group) {
+          Meteor.users.update({_id: userId}, {$set: {group: ownedByTenant}});
+          user = Meteor.users.findOne(userId);
+        }
+
+        if (site !== ownedByTenant || site !== user.group) {
+          throw new Meteor.Error(Accounts.LoginCancelledError.numericError, "User is not part of site: " + options.cas.site);
+        }
+      }
+    });
+  }
+
+  return output;
 });
 
 var _hasCredential = function(credentialToken) {
